@@ -23,6 +23,14 @@ else:
 setup(
     name="points_in_rbbox",
     version="1.1.0",
+    install_requires=[
+        "torch",
+    ]
+    extras_require={
+        "test": [
+            "lh-tool>=1.12.1",
+        ]
+    }
     packages=["points_in_rbbox"],
     ext_modules=[
         CUDAExtension(

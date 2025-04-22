@@ -5,6 +5,11 @@
 
 实现`point-in-rbbox`CUDA算子，用于计算3D旋转框内的点云，相比PyTorch版本显存有明显优化
 
+# 依赖
+
+- CUDA：11.8
+- PyTorch：2.0.0
+
 # 安装
 
 - pip安装
