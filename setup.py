@@ -25,7 +25,7 @@ setup(
     version="1.1.0",
     install_requires=[
         "torch",
-    ]
+    ],
     extras_require={
         "test": [
             "lh-tool>=1.12.1",
