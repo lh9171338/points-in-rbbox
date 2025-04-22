@@ -30,7 +30,7 @@ setup(
         "test": [
             "lh-tool>=1.12.1",
         ]
-    }
+    },
     packages=["points_in_rbbox"],
     ext_modules=[
         CUDAExtension(
