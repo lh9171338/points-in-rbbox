@@ -8,17 +8,14 @@ jobs:
   build-n-publish:
     name: Build and publish Python distributions 📦 to PyPI
     runs-on: ubuntu-latest
+    container:
+      image: nvidia/cuda:11.8.0-devel-ubuntu20.04  # 开发环境（含编译器）
     steps:
     - uses: actions/checkout@master
     - name: Set up Python 3.8
       uses: actions/setup-python@main
       with:
         python-version: 3.8
-    - name: Set up CUDA
-      uses: actions-setup/cuda@v1
-      with:
-        cuda-version: "11.8"
-        install-cudnn: true
     
     - name: Install torch
       run: |
