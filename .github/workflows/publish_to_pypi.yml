@@ -14,7 +14,12 @@ jobs:
       uses: actions/setup-python@main
       with:
         python-version: 3.8
-
+    - name: Set up CUDA
+      uses: actions-setup/cuda@v1
+      with:
+        cuda-version: "11.8"
+        install-cudnn: true
+    
     - name: Install torch
       run: |
         python -m pip install torch==2.0.0
