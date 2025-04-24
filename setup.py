@@ -12,6 +12,9 @@ from setuptools import setup
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 
+with open("README.md", "r", encoding="utf-8") as f:
+    long_description = f.read()
+
 if os.getenv("ENABLE_BF16", "0") == "1":
     print("BF16 is enabled")
     cxx_args = ["-g", "-DENABLE_BF16"]
@@ -23,6 +26,20 @@ else:
 setup(
     name="points_in_rbbox",
     version="1.1.0",
+    author="lh9171338",
+    author_email="lihao2015@whu.edu.cn",
+    description="point-in-rbbox CUDA ops",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/lh9171338/points-in-rbbox",
+    project_urls={
+        "Bug Tracker": "https://github.com/lh9171338/points-in-rbbox/issues",
+    },
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
     packages=["points_in_rbbox"],
     ext_modules=[
         CUDAExtension(
