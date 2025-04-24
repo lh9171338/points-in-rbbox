@@ -25,6 +25,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
+        name: python-dist
         path: dist/*.tar.gz
   publish:
     needs: build
@@ -33,6 +34,8 @@ jobs:
     steps:
     - name: Download artifact
       uses: actions/download-artifact@v3
+      with:
+        name: python-dist
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1.12
       with:
