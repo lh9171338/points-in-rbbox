@@ -1,4 +1,4 @@
-[<img height="23" src="https://github.com/lh9171338/Outline/blob/master/icon.jpg"/>](https://github.com/lh9171338/Outline) point-in-rbbox
+point-in-rbbox
 ===
 
 # 功能
@@ -41,7 +41,7 @@ mask = points_in_rbbox_cuda(points, boxes)
 # 显存&耗时
 
 | 方法 | dtype | 显存(GB) | 耗时(s) |
-| :---: | :---: | :---: | :---: |
+| --- | --- | --- | --- |
 | points_in_rbbox_torch | FP32 | 10.0 | 12 |
 | points_in_rbbox_torch | FP16 | 5.3 | 10 |
 | points_in_rbbox_torch | BF16 | 5.3 | 10 |
