@@ -4,4 +4,4 @@ from .utils import (
     points_in_rbbox_cuda,
 )
 
-__version__ = "1.1.4"
+__version__ = "1.1.5"

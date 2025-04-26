@@ -22,7 +22,7 @@ jobs:
           python -m pip install torch==2.0.0
       - name: Build distribution 📦
         run: |
-          python setup.py sdist
+          python setup.py sdist bdist_wheel
       - name: List build artifacts
         run: ls -l dist/
       - name: Upload artifact
