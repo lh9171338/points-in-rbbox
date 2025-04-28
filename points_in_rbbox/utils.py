@@ -60,14 +60,14 @@ def points_in_rbbox_numpy(points, boxes, return_indices=False):
 
 
 @torch.no_grad()
-def points_in_rbbox_torch(points, boxes, gpu_id=0, dtype=torch.float32, return_indices=False):
+def points_in_rbbox_torch(points, boxes, device="cuda", dtype=torch.float32, return_indices=False):
     """
     find points in rbbox with torch
 
     Args:
         points (np.ndarray|torch.Tensor): points with shape [N, 3]
         boxes (np.ndarray|torch.Tensor): boxes with shape [M, 7]
-        gpu_id (int): gpu id
+        device (str|int): device, default is 'cuda'
         dtype (torch.dtype): data type, default is torch.float32, choose from [torch.float32, torch.float16, torch.bfloat16]
         return_indices (bool): whether to return indices, default is False
 
@@ -75,8 +75,6 @@ def points_in_rbbox_torch(points, boxes, gpu_id=0, dtype=torch.float32, return_i
         mask (np.ndarray): mask with shape [M, N], only return when `return_indices` is False
         indices_list (list[np.ndarray]): indices list with length M, only return when `return_indices` is True
     """
-    device = "cpu" if gpu_id < 0 else f"cuda:{gpu_id}"
-
     N = points.shape[0]
     M = boxes.shape[0]
     if M == 0:
@@ -121,13 +119,14 @@ def points_in_rbbox_torch(points, boxes, gpu_id=0, dtype=torch.float32, return_i
 
 
 @torch.no_grad()
-def points_in_rbbox_cuda(points, boxes, dtype=torch.float32, return_indices=False):
+def points_in_rbbox_cuda(points, boxes, device="cuda", dtype=torch.float32, return_indices=False):
     """
     find points in rbbox with torch
 
     Args:
         points (np.ndarray|torch.Tensor): points with shape [N, 3]
         boxes (np.ndarray|torch.Tensor): boxes with shape [M, 7]
+        device (str|int): device, default is 'cuda'
         dtype (torch.dtype): data type, default is torch.float32, choose from [torch.float32, torch.float16, torch.bfloat16]
         return_indices (bool): whether to return indices, default is False
 
@@ -135,6 +134,9 @@ def points_in_rbbox_cuda(points, boxes, dtype=torch.float32, return_indices=Fals
         mask (np.ndarray): mask with shape [M, N], only return when `return_indices` is False
         indices_list (list[np.ndarray]): indices list with length M, only return when `return_indices` is True
     """
+    if device == "cpu":
+        return points_in_rbbox_torch(points, boxes, device=device, dtype=dtype, return_indices=return_indices)
+
     N = points.shape[0]
     M = boxes.shape[0]
     if M == 0:
@@ -147,8 +149,8 @@ def points_in_rbbox_cuda(points, boxes, dtype=torch.float32, return_indices=Fals
         points = torch.from_numpy(points)
     if isinstance(boxes, np.ndarray):
         boxes = torch.from_numpy(boxes)
-    points = points.to(dtype=dtype).cuda()
-    boxes = boxes.to(dtype=dtype).cuda()
+    points = points.to(device=device, dtype=dtype)
+    boxes = boxes.to(device=device, dtype=dtype)
     mask = points.new_zeros((M, N), dtype=torch.bool)
     points_in_rbbox_ops.points_in_rbbox_wrapper(points, boxes, mask)
     if return_indices:
