@@ -27,9 +27,9 @@ def points_in_rbbox_numpy(points, boxes, return_indices=False):
     """
     N = points.shape[0]
     M = boxes.shape[0]
-    if M == 0:
+    if N == 0 or M == 0:
         if return_indices:
-            return [[]]
+            return [[]] * M
         else:
             return np.zeros((M, N), dtype="bool")
 
@@ -47,7 +47,7 @@ def points_in_rbbox_numpy(points, boxes, return_indices=False):
     rot_matrix[:, 1, 1] = cos_theta
     rot_matrix[:, 2, 2] = 1.0
 
-    points_local = points_local @ rot_matrix    # shape [M, N, 3]
+    points_local = points_local @ rot_matrix  # shape [M, N, 3]
     points_dist = np.abs(points_local)
     mask = (points_dist < 0.5 * dim[:, None]).all(axis=-1)
     if return_indices:
@@ -77,9 +77,9 @@ def points_in_rbbox_torch(points, boxes, device="cuda", dtype=torch.float32, ret
     """
     N = points.shape[0]
     M = boxes.shape[0]
-    if M == 0:
+    if N == 0 or M == 0:
         if return_indices:
-            return [[]]
+            return [[]] * M
         else:
             return np.zeros((M, N), dtype="bool")
 
@@ -104,7 +104,7 @@ def points_in_rbbox_torch(points, boxes, device="cuda", dtype=torch.float32, ret
     rot_matrix[:, 1, 1] = cos_theta
     rot_matrix[:, 2, 2] = 1.0
 
-    points_local = points_local @ rot_matrix # shape [M, N, 3]
+    points_local = points_local @ rot_matrix  # shape [M, N, 3]
     points_local = points_local.abs()
     mask = (points_local < 0.5 * dim[:, None]).all(dim=-1)
     if return_indices:
@@ -115,7 +115,6 @@ def points_in_rbbox_torch(points, boxes, device="cuda", dtype=torch.float32, ret
         return indices_list
     else:
         return mask.cpu().numpy()
-    return indices_list
 
 
 @torch.no_grad()
@@ -139,9 +138,9 @@ def points_in_rbbox_cuda(points, boxes, device="cuda", dtype=torch.float32, retu
 
     N = points.shape[0]
     M = boxes.shape[0]
-    if M == 0:
+    if N == 0 or M == 0:
         if return_indices:
-            return [[]]
+            return [[]] * M
         else:
             return np.zeros((M, N), dtype="bool")
 

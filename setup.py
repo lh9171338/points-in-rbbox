@@ -28,7 +28,7 @@ else:
 
 setup(
     name="points_in_rbbox",
-    version="1.1.6",
+    version="1.1.7",
     author="lh9171338",
     author_email="lihao2015@whu.edu.cn",
     description="point-in-rbbox CUDA ops",
