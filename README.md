@@ -3,12 +3,13 @@
 
 # 功能
 
-实现`point-in-rbbox`CUDA算子，用于计算3D旋转框内的点云，相比PyTorch版本显存有明显优化
+实现`point-in-rbbox`算子（支持CUDA和Triton），用于计算3D旋转框内的点云，相比PyTorch版本显存有明显优化
 
 # 依赖
 
 - CUDA：11.8
 - PyTorch：2.0.0
+- Triton：2.0.0（使用Triton算子时需要）
 
 # 安装
 
@@ -32,10 +33,18 @@ python3 setup.py install
 
 # 使用
 
+- CUDA算子
 ```python
 from points_in_rbbox import points_in_rbbox_cuda
 
 mask = points_in_rbbox_cuda(points, boxes)
+```
+
+- Triton算子（无需编译，自动适配GPU架构）
+```python
+from points_in_rbbox import points_in_rbbox_triton
+
+mask = points_in_rbbox_triton(points, boxes)
 ```
 
 # 显存&耗时
@@ -48,3 +57,6 @@ mask = points_in_rbbox_cuda(points, boxes)
 | points_in_rbbox_cuda | FP32 | 1.2 | 9 |
 | points_in_rbbox_cuda | FP16 | 1.0 | 9 |
 | points_in_rbbox_cuda | BF16 | 1.0 | 9 |
+| points_in_rbbox_triton | FP32 | 1.2 | 8 |
+| points_in_rbbox_triton | FP16 | 1.0 | 8 |
+| points_in_rbbox_triton | BF16 | 1.0 | 8 |

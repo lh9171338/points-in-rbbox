@@ -9,6 +9,8 @@
 
 import numpy as np
 import torch
+import triton
+import triton.language as tl
 from . import points_in_rbbox_ops
 
 
@@ -152,6 +154,106 @@ def points_in_rbbox_cuda(points, boxes, device="cuda", dtype=torch.float32, retu
     boxes = boxes.to(device=device, dtype=dtype)
     mask = points.new_zeros((M, N), dtype=torch.bool)
     points_in_rbbox_ops.points_in_rbbox_wrapper(points, boxes, mask)
+    if return_indices:
+        indices = mask.flatten().nonzero(as_tuple=True)[0]
+        indices %= N
+        indices_list = indices.split(mask.sum(dim=-1).tolist())
+        indices_list = [x.cpu().numpy() for x in indices_list]
+        return indices_list
+    else:
+        return mask.cpu().numpy()
+
+
+@triton.jit
+def _points_in_rbbox_triton_kernel(
+    points_ptr,
+    boxes_ptr,
+    output_ptr,
+    N,
+    BLOCK_N: tl.constexpr,
+):
+    """
+    each program handles one box (pid_m) and one block of points (pid_n)
+    """
+    pid_n = tl.program_id(0)
+    pid_m = tl.program_id(1)
+
+    offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
+    mask_n = offs_n < N
+
+    box_offset = pid_m * 7
+    cx = tl.load(boxes_ptr + box_offset + 0)
+    cy = tl.load(boxes_ptr + box_offset + 1)
+    cz = tl.load(boxes_ptr + box_offset + 2)
+    half_l = tl.load(boxes_ptr + box_offset + 3) * 0.5
+    half_w = tl.load(boxes_ptr + box_offset + 4) * 0.5
+    half_h = tl.load(boxes_ptr + box_offset + 5) * 0.5
+    theta = tl.load(boxes_ptr + box_offset + 6)
+
+    cos_theta = tl.cos(theta.to(tl.float32)).to(theta.dtype)
+    sin_theta = tl.sin(theta.to(tl.float32)).to(theta.dtype)
+
+    px = tl.load(points_ptr + offs_n * 3 + 0, mask=mask_n)
+    py = tl.load(points_ptr + offs_n * 3 + 1, mask=mask_n)
+    pz = tl.load(points_ptr + offs_n * 3 + 2, mask=mask_n)
+
+    x1 = px - cx
+    y1 = py - cy
+    z = pz - cz
+
+    x = x1 * cos_theta + y1 * sin_theta
+    y = -x1 * sin_theta + y1 * cos_theta
+
+    result = (tl.abs(x) < half_l) & (tl.abs(y) < half_w) & (tl.abs(z) < half_h)
+
+    tl.store(output_ptr + pid_m * N + offs_n, result, mask=mask_n)
+
+
+@torch.no_grad()
+def points_in_rbbox_triton(points, boxes, device="cuda", dtype=torch.float32, return_indices=False, block_n=256):
+    """
+    find points in rbbox with triton
+
+    Args:
+        points (np.ndarray|torch.Tensor): points with shape [N, 3]
+        boxes (np.ndarray|torch.Tensor): boxes with shape [M, 7]
+        device (str|int): device, default is 'cuda'
+        dtype (torch.dtype): data type, default is torch.float32, choose from [torch.float32, torch.float16, torch.bfloat16]
+        return_indices (bool): whether to return indices, default is False
+        block_n (int): block size along the points dimension, default is 256
+
+    Returns:
+        mask (np.ndarray): mask with shape [M, N], only return when `return_indices` is False
+        indices_list (list[np.ndarray]): indices list with length M, only return when `return_indices` is True
+    """
+    if device == "cpu":
+        return points_in_rbbox_torch(points, boxes, device=device, dtype=dtype, return_indices=return_indices)
+
+    N = points.shape[0]
+    M = boxes.shape[0]
+    if N == 0 or M == 0:
+        if return_indices:
+            return [[]] * M
+        else:
+            return np.zeros((M, N), dtype="bool")
+
+    if isinstance(points, np.ndarray):
+        points = torch.from_numpy(points)
+    if isinstance(boxes, np.ndarray):
+        boxes = torch.from_numpy(boxes)
+    points = points.contiguous().to(device=device, dtype=dtype)
+    boxes = boxes.contiguous().to(device=device, dtype=dtype)
+    mask = points.new_zeros((M, N), dtype=torch.bool)
+
+    grid = (triton.cdiv(N, block_n), M)
+    _points_in_rbbox_triton_kernel[grid](
+        points,
+        boxes,
+        mask,
+        N,
+        BLOCK_N=block_n,
+    )
+
     if return_indices:
         indices = mask.flatten().nonzero(as_tuple=True)[0]
         indices %= N
